@@ -1,0 +1,51 @@
+SEB is a set of (bourne) shell scripts designed to
+simplify the process of backing up a single system to a 
+GELI or LUKS-encrypted block device of some sort.
+
+I am writing this to scratch my own itch, so suggestions
+or improvements are welciome.
+
+The project consistes of several scripts:
+
+The SEBSetup script walks the user through setting up 
+backup options (tar or rsync, various compression, 
+block device, etc...)and schedule.  The script outputs 
+a configuration file to /etc/seb.conf and a crontab file
+to /etc/cron.d/seb.  SEBKeyMgr and SEBDiskMgr are run to
+initiallize the encryption keys and the backup storage
+devices.
+
+Naturally, the config file can be edited manually.
+
+The SEBKeyMgr script assists the user in generating secure 
+encryption keys and back them up to a USB flash drive.
+Various security levels range from normal--key stored on
+the local drive and backed up to a USB flash drive--to 
+paranoid--keys are split up and stored on multiple flash
+drives that are encrypted with LUKS or GELI (passphrase)
+and are included on the drive with thousands of other
+similarily-named keys.  The location of the key file on
+the hard drive (not the one backed up to a USB Key) is
+written to /etc/sab.conf so the actual backup script knows
+where to find it.
+
+The SEBDiskMgr assists the user in initializing an encrypted
+block device.  It optionally runs SEBKeyMgr if there are no
+keys specified in /etc/seb.conf.  SEBDiskMgr will then use
+the key specified in the config file to encrypt the target
+block device using LUKS or GELI depending on OS.
+
+SEBackup is the meat and potatoes of SEB.  It unlocks and
+mounts the block device using the device node and encryption
+key specified in the config file.  It then backs up the requested
+directories.  The backup set and backup type (full or differential)
+is specified by command line parameters to the script.
+Normally this is handled by the cron job that runs the backup
+automatically but they can also be specified from the CLI if the
+script is written manually.  Once the script is finished, the
+encrypted partition is unmounted and detached from the system.
+
+SEBRestore is a script to restore specific files or directories
+from a backup archive.  It attaches and mounts the attached 
+storage device, lists the available backup archives, and attempts
+to restore the file or directory to the specified path.
